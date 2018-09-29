@@ -1,46 +1,67 @@
 import React, {Component} from 'react';
 import {Button, Container, Row} from 'react-bootstrap';
 import ListaTweet from '../components/ListaTweet';
+import UserService from '../services/UserService';
+import TweetService from '../services/TweetService';
+import { css } from 'react-emotion';
+import { ClipLoader } from 'react-spinners';
 
-class Perfil extends Component {
+const override = css`
+    display: block;
+    margin: 0 auto;
+    border-color: red;
+`;
+
+class Perfil extends React.Component {
 
     state = {
-        tweets: [{
-            content: 'Teste 3',
-            uid: '3',
-            author: '1234',
-            timestamp: Date.now(),
-            authorName: 'Luiz Augusto',
-            authorUserName: 'luizaugustocs',
-            authorPhotoURL: 'https://www.bookmydesign.com/auth-image/medium/blank-user.png'
-        }, {
-            content: 'Teste 2',
-            uid: '2',
-            author: '1234',
-            timestamp: Date.now() - 500000,
-            authorName: 'Luiz Augusto',
-            authorUserName: 'luizaugustocs',
-            authorPhotoURL: 'https://www.bookmydesign.com/auth-image/medium/blank-user.png'
-        }, {
-            content: 'Teste 1',
-            uid: '1',
-            author: '1234',
-            timestamp: Date.now() - 1000000,
-            authorName: 'Luiz Augusto',
-            authorUserName: 'luizaugustocs',
-            authorPhotoURL: 'https://www.bookmydesign.com/auth-image/medium/blank-user.png'
-        }],
-        user: {
-            uid: '1234',
-            photoURL: 'https://www.bookmydesign.com/auth-image/medium/blank-user.png',
-            userName: 'luizaugustocs',
-            displayName: 'Luiz Augusto',
-            email: 'luizaugustocsouza@gmail.com'
-        }
+        loading: false,
+        tweets: [],
+        user: {}
     };
+    
+    componentDidMount() {
+        const { id } = this.props.match.params;
+
+        this.setState({ loading: true }, () => {
+            // UserService.getUserData(id)
+            //     .then(user => {
+            //         this.setState({ user: user})
+            //         TweetService.getUserTweets(user)
+            //             .then(tweets => {
+            //                 this.setState({ tweets: tweets, loading: false})
+            //             });
+            //     })
+            UserService.getUserData(id)
+                .then(user => {
+                    this.setState({ user: user});
+                    return user;
+                })
+                .then(user => TweetService.getUserTweets(user))
+                .then(tweets => this.setState({ tweets: tweets, loading: false}))
+        })
+    }
 
     render() {
-        const {user, tweets} = this.state;
+        const {user, tweets, loading} = this.state;
+        const {currentUser, onFollow} = this.props;
+
+        
+        if (loading) {
+            return (
+                <div className='sweet-loading'>
+                <ClipLoader
+                  className={override}
+                  sizeUnit={"px"}
+                  size={150}
+                  color={'#123abc'}
+                  loading={this.state.loading}
+                />
+              </div>             )
+        }
+        
+
+        const shouldSHowFollowButton = currentUser !== undefined && user !== undefined && currentUser.id !== user.id;
         return (
             <Container>
                 <Row className="profile-section">

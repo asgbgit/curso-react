@@ -33,6 +33,8 @@ export interface UserService {
 
     getUserData(userId: string): Promise<UserData>;
 
+    //getAllUsers(): Promise<[UserData]>;
+
     searchUser(searchText?: string): Promise<UserData>
 }
 

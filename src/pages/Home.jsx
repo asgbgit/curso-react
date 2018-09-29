@@ -2,13 +2,15 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Button, Container, Form, FormControl, InputGroup, Row, Alert} from 'react-bootstrap';
 import ListaTweet from '../components/ListaTweet';
+import UserList from '../components/UserList';
 
 
 class Home extends Component {
 
     static propTypes = {
         tweets: PropTypes.array,
-        onTweet: PropTypes.func.isRequired
+        users: PropTypes.array,
+        onTweet: PropTypes.func.isRequired,
     };
 
     state = {
@@ -20,6 +22,9 @@ class Home extends Component {
         this.setState({currentPost: event.target.value})
     };
 
+    onGetUsers () {
+
+    }
     onPost = () => {
 
         const {currentUser} = this.props;
@@ -29,28 +34,23 @@ class Home extends Component {
             return;
         }
 
-        const newTweet = {
-            content: this.state.currentPost,
-            uid: new Date(Date.now()).toISOString(),
-            author: currentUser.uid,
-            timestamp: Date.now(),
-            authorName: currentUser.displayName,
-            authorUserName: currentUser.userName,
-            authorPhotoURL: currentUser.photoURL
-        };
+        const content = this.state.currentPost;
 
-        this.setState({currentPost: '', alertVisible: false}, () => {
-            this.props.onTweet(newTweet);
-        })
+        this.setState({currentPost: '', 
+                       alertVisible: false}, 
+                       () => { this.props.onTweet(content) })
     };
 
     render() {
 
         const {currentPost, alertVisible} = this.state;
-        const {tweets} = this.props;
+        const {tweets, users} = this.props;
+
+        console.log(this.props);
 
         return (
             <Container style={{marginTop: 30}}>
+                <UserList users={users}/>
                 <Alert variant="danger" defaultShow={alertVisible}>
                     Você deve estar logado para postar alguma coisa.
                 </Alert>

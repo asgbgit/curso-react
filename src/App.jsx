@@ -7,6 +7,9 @@ import Perfil from './pages/Perfil';
 import Configuracoes from './pages/Configuracoes'
 import NotFound from './pages/NotFound';
 import { Route, Switch, withRouter } from 'react-router-dom';
+import AuthService from './services/AuthService';
+import TweetService from './services/TweetService';
+import UserService from './services/UserService';
 
 class App extends Component {
   constructor(props) {
@@ -14,57 +17,80 @@ class App extends Component {
 
     this.state = {
       currentUser: undefined,
+      users: [],
       tweets: []
     }
   }
 
-  onLogin = () => {
-    this.setState({
-      currentUser: {
-        uid: '1234',
-        userName: 'luizaugustocs',
-        displayName: 'Luiz Augusto',
-        photoURL: 'https://www.bookmydesign.com/auth-image/medium/blank-user.png',
-        email: 'luizaugustocsouza@gmail.com'
+  componentDidMount() {
+    AuthService.onAuthChange((authUser) => {
+      if (authUser) {
+        UserService.getUserData(authUser.uid)
+          .then((user) => {
+            this.setState({currentUser: user});
+            this.getUserFeed(user);
+            this.getUsers();
+          })
       }
-    });
+      else {
+        this.setState({currentUser: undefined});
+      }
+    })
+  }
+
+  getUserFeed = (user) => {
+    TweetService.getUserFeed(user)
+      .then(tweets => {
+        this.setState({tweets})
+      })
+  }
+
+  getUsers () {
+    UserService.getAllUsers()
+      .then((users) => {
+        console.log(users);
+        this.setState({users})        
+      });
+  }
+
+  onLogin = () => {
+    AuthService.loginWithGoogle();
   };
 
   onLogout = () => {
-    this.setState({ currentUser: undefined }, () => {
-      this.props.history.push('/')
-    });
+    AuthService.logout();
   };
 
   onPostTweet = (tweet) => {
-    this.setState(state => ({
-      tweets: [tweet, ...state.tweets]
-    }))
+    TweetService.newTweet(tweet)
+      .then(() => setTimeout(() => this.getUserFeed(this.state.currentUser), 1000));
   }
-  onSaveConfiguracao = (updatedUser) => {
-    return new Promise(resolve => {
-      this.setState({
-        currentUser: { ...updatedUser }
-      }, () => {
-        resolve()
-      })
 
-    })
+  onFollow = (user) => {
+    UserService.followUser(user)
+      .then(() => console.log('Follow'));
+  }
+
+  onSaveConfiguracao = (updatedUser) => {
+    return UserService.updateUserData(updatedUser)
+      .then(() => this.setState({currentUser: {...updatedUser}}));
   };
 
   render() {
-    const { currentUser, tweets } = this.state;
+    const { currentUser, tweets, users } = this.state;
+
     return (
       <div>
         <Header currentUser={currentUser} onLogin={this.onLogin}
                 onLogout={this.onLogout} />
         <Switch>
           <Route path="/" exact
-                 render={props => <Home {...props} tweets={tweets} currentUser={currentUser}
+                   render={props => <Home {...props} tweets={tweets} currentUser={currentUser} users={users}
                                         onTweet={this.onPostTweet}
                  />}
           /><Route path="/perfil/:id" exact
                    render={props => <Perfil {...props} currentUser={currentUser}
+                                        onFollow={this.onFollow}
                    />}
         />
           <Route path="/configuracao" exact
